@@ -746,6 +746,20 @@ function getPersonData(r){
 
   if(activePerson === "Bert-Jan"){
 
+    if(r.bertjanAvailable === false){
+
+      return {
+        available:false,
+        kcal:"",
+        protein:"",
+        carbs:"",
+        fat:"",
+        fiber:"",
+        ingredients:"",
+        notes:""
+      };
+    }
+
     return {
       available:true,
       kcal:r.kcal,
@@ -831,6 +845,11 @@ function render(){
       const favoriteOK =
         !favoritesOnly ||
         r.favorite;
+         
+      const profileOK =
+        activePerson === "Babke"
+        ? hasBabkeData(r)
+        : r.bertjanAvailable !== false;
 
       const haystack = [
         r.name,
@@ -852,7 +871,8 @@ function render(){
       return (
         categoryOK &&
         favoriteOK &&
-        searchOK
+        searchOK &&
+        profileOK
       );
     });
 
@@ -1512,16 +1532,14 @@ function randomRecipe(){
       r.category === activeCategory
     );
 
+  pool = pool.filter(r =>
 
-  if(activePerson === "Babke"){
+    activePerson === "Babke"
+    ? hasBabkeData(r)
+    : r.bertjanAvailable !== false
 
-    const babkePool =
-      pool.filter(hasBabkeData);
-
-    if(babkePool.length > 0){
-      pool = babkePool;
-    }
-  }
+  );
+  
 
 
   if(pool.length === 0){
