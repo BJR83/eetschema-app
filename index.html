@@ -17,6 +17,7 @@
       --muted:#68736c;
       --danger:#a33b3b;
       --border:#dce3de;
+      --orange:#a75b17;
     }
 
     *{box-sizing:border-box}
@@ -34,17 +35,43 @@
       z-index:10;
       background:var(--green);
       color:white;
-      padding:calc(14px + env(safe-area-inset-top)) 18px 15px;
+      padding:calc(12px + env(safe-area-inset-top)) 16px 13px;
       box-shadow:0 2px 8px rgba(0,0,0,.12);
     }
 
     header h1{
-      margin:0;
-      font-size:24px;
+      margin:0 0 9px;
+      font-size:23px;
     }
 
-    header small{
+    .personSwitch{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      background:rgba(255,255,255,.16);
+      padding:3px;
+      border-radius:12px;
+      gap:3px;
+    }
+
+    .personSwitch button{
+      background:transparent;
+      color:white;
+      padding:9px 8px;
+      font-size:15px;
+      border-radius:9px;
+    }
+
+    .personSwitch button.active{
+      background:white;
+      color:var(--green);
+    }
+
+    #profileInfo{
+      display:block;
+      margin-top:7px;
+      font-size:12px;
       opacity:.8;
+      text-align:center;
     }
 
     main{
@@ -111,10 +138,6 @@
       padding:10px 12px;
     }
 
-    .toolbar .active{
-      background:var(--green2);
-    }
-
     .recipe{
       background:var(--card);
       border:1px solid var(--border);
@@ -140,6 +163,28 @@
       font-size:14px;
       color:var(--muted);
       line-height:1.5;
+    }
+
+    .profileBadge{
+      display:inline-block;
+      margin-top:6px;
+      padding:4px 8px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
+      background:var(--accent);
+      color:var(--green);
+    }
+
+    .missingBadge{
+      display:inline-block;
+      background:#fff3e8;
+      color:var(--orange);
+      padding:5px 8px;
+      border-radius:8px;
+      font-size:12px;
+      font-weight:700;
+      margin-top:7px;
     }
 
     .tags{
@@ -252,6 +297,7 @@
       display:flex;
       gap:8px;
       margin-top:18px;
+      flex-wrap:wrap;
     }
 
     .infoBox{
@@ -259,6 +305,15 @@
       padding:12px;
       border-radius:12px;
       line-height:1.45;
+    }
+
+    .warningBox{
+      background:#fff4e8;
+      color:#75400f;
+      padding:12px;
+      border-radius:12px;
+      line-height:1.45;
+      margin-top:10px;
     }
 
     .empty{
@@ -283,6 +338,23 @@
       font-size:18px;
     }
 
+    .formSection{
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:10px 12px;
+      margin-top:15px;
+    }
+
+    .formSection summary{
+      font-size:17px;
+    }
+
+    .personLabel{
+      font-size:13px;
+      color:var(--muted);
+      margin-top:3px;
+    }
+
     @media(max-width:500px){
       .two{grid-template-columns:1fr}
     }
@@ -293,7 +365,17 @@
 
 <header>
   <h1>🍽️ Mijn Eetschema</h1>
-  <small>Recepten, porties & DINERCHECK</small>
+
+  <div class="personSwitch">
+    <button id="personBJ" onclick="setPerson('Bert-Jan')">
+      👨 Bert-Jan
+    </button>
+    <button id="personBabke" onclick="setPerson('Babke')">
+      👩 Babke
+    </button>
+  </div>
+
+  <span id="profileInfo"></span>
 </header>
 
 <main>
@@ -305,7 +387,12 @@
     <button onclick="setCategory('Diner')">🍽️ Diner</button>
   </div>
 
-  <input id="search" class="search" placeholder="🔍 Zoek op naam, ingrediënt of tag..." oninput="render()">
+  <input
+    id="search"
+    class="search"
+    placeholder="🔍 Zoek op naam, ingrediënt of tag..."
+    oninput="render()"
+  >
 
   <div class="toolbar">
     <button class="secondary" onclick="setCategory('Alles')">Alles</button>
@@ -322,9 +409,11 @@
 
 <button class="fixedAdd" onclick="openRecipeForm()">+</button>
 
-<!-- Recept toevoegen/bewerken -->
+
+<!-- RECEPT TOEVOEGEN / BEWERKEN -->
 <dialog id="recipeDialog">
   <div class="dialogInner">
+
     <h2 id="formTitle">Recept toevoegen</h2>
 
     <input id="editId" type="hidden">
@@ -340,227 +429,626 @@
       <option>Diner</option>
     </select>
 
-    <div class="two">
-      <div>
-        <label>kcal</label>
-        <input id="kcal" type="number">
-      </div>
-      <div>
-        <label>Eiwit (g)</label>
-        <input id="protein" type="number">
-      </div>
-      <div>
-        <label>Koolhydraten (g)</label>
-        <input id="carbs" type="number">
-      </div>
-      <div>
-        <label>Vet (g)</label>
-        <input id="fat" type="number">
-      </div>
-      <div>
-        <label>Vezels (g)</label>
-        <input id="fiber" type="number">
-      </div>
-      <div>
-        <label>Bereidingstijd</label>
-        <input id="time" placeholder="20 min">
-      </div>
-    </div>
-
-    <label>Ingrediënten</label>
-    <textarea id="ingredients" placeholder="Eén ingrediënt per regel"></textarea>
-
-    <label>Werkwijze</label>
-    <textarea id="method" placeholder="Eén stap per regel"></textarea>
-
-    <label>Variatie</label>
-    <textarea id="variation" placeholder="Bijv. kip vervangen door biefstuk"></textarea>
+    <label>Bereidingstijd</label>
+    <input id="time" placeholder="Bijv. 20 min">
 
     <label>Tags</label>
     <input id="tags" placeholder="kip, snel, zonder rijst, hummus">
 
-    <label>Babke-portie / alternatief</label>
-    <textarea id="babke" placeholder="Optioneel: aangepaste hoeveelheden voor Babke"></textarea>
+    <label>Werkwijze</label>
+    <textarea
+      id="method"
+      placeholder="Eén stap per regel. De werkwijze geldt voor beide personen."
+    ></textarea>
+
+    <label>Variatie</label>
+    <textarea
+      id="variation"
+      placeholder="Bijv. kip vervangen door biefstuk"
+    ></textarea>
+
+
+    <details class="formSection" open>
+      <summary>👨 Bert-Jan-portie</summary>
+
+      <div class="two">
+        <div>
+          <label>kcal</label>
+          <input id="kcal" type="number">
+        </div>
+
+        <div>
+          <label>Eiwit (g)</label>
+          <input id="protein" type="number">
+        </div>
+
+        <div>
+          <label>Koolhydraten (g)</label>
+          <input id="carbs" type="number">
+        </div>
+
+        <div>
+          <label>Vet (g)</label>
+          <input id="fat" type="number">
+        </div>
+
+        <div>
+          <label>Vezels (g)</label>
+          <input id="fiber" type="number">
+        </div>
+      </div>
+
+      <label>Ingrediënten Bert-Jan</label>
+      <textarea
+        id="ingredients"
+        placeholder="Eén ingrediënt per regel"
+      ></textarea>
+    </details>
+
+
+    <details class="formSection">
+      <summary>👩 Babke-portie — optioneel</summary>
+
+      <div class="infoBox">
+        Vul dit alleen in als voor dit gerecht ook een Babke-portie bekend is.
+      </div>
+
+      <div class="two">
+        <div>
+          <label>kcal Babke</label>
+          <input id="babkeKcal" type="number">
+        </div>
+
+        <div>
+          <label>Eiwit Babke (g)</label>
+          <input id="babkeProtein" type="number">
+        </div>
+
+        <div>
+          <label>Koolhydraten Babke (g)</label>
+          <input id="babkeCarbs" type="number">
+        </div>
+
+        <div>
+          <label>Vet Babke (g)</label>
+          <input id="babkeFat" type="number">
+        </div>
+
+        <div>
+          <label>Vezels Babke (g)</label>
+          <input id="babkeFiber" type="number">
+        </div>
+      </div>
+
+      <label>Ingrediënten Babke</label>
+      <textarea
+        id="babkeIngredients"
+        placeholder="Eén ingrediënt per regel"
+      ></textarea>
+
+      <label>Extra opmerking Babke</label>
+      <textarea
+        id="babkeNotes"
+        placeholder="Optioneel"
+      ></textarea>
+    </details>
+
 
     <div class="modalActions">
       <button onclick="saveRecipe()">Opslaan</button>
-      <button class="secondary" onclick="recipeDialog.close()">Annuleren</button>
+      <button
+        class="secondary"
+        onclick="document.getElementById('recipeDialog').close()"
+      >
+        Annuleren
+      </button>
     </div>
+
   </div>
 </dialog>
+
 
 <!-- DINERCHECK -->
 <dialog id="dinnerDialog">
   <div class="dialogInner">
+
     <h2>✅ DINERCHECK</h2>
 
     <div class="infoBox">
-      Plak hieronder een Picnic-link of recepttekst. De app maakt automatisch de juiste opdracht voor ChatGPT.
+      Plak een Picnic-link of recepttekst. Kies voor wie je het recept wilt laten omrekenen.
     </div>
 
+    <label>Voor wie?</label>
+    <select id="dinnerPerson">
+      <option value="Bert-Jan">Bert-Jan</option>
+      <option value="Babke">Babke</option>
+      <option value="Samen">Bert-Jan + Babke samen</option>
+    </select>
+
     <label>Recept of link</label>
-    <textarea id="dinnerInput" placeholder="https://picnic.app/..."></textarea>
+    <textarea
+      id="dinnerInput"
+      placeholder="https://picnic.app/..."
+    ></textarea>
 
     <div class="modalActions">
       <button onclick="copyDinnerCheck()">Kopieer DINERCHECK</button>
-      <button class="secondary" onclick="dinnerDialog.close()">Sluiten</button>
+      <button
+        class="secondary"
+        onclick="document.getElementById('dinnerDialog').close()"
+      >
+        Sluiten
+      </button>
     </div>
+
   </div>
 </dialog>
 
-<!-- Backup -->
+
+<!-- BACK-UP -->
 <dialog id="backupDialog">
   <div class="dialogInner">
+
     <h2>💾 Back-up</h2>
 
-    <p>Download regelmatig een back-up van je recepten. Zo raak je niets kwijt als browsergegevens worden gewist.</p>
+    <p>
+      Download regelmatig een back-up van je recepten.
+      Zo raak je niets kwijt wanneer browsergegevens worden gewist.
+    </p>
 
     <div class="modalActions">
       <button onclick="exportRecipes()">Back-up downloaden</button>
-      <button class="secondary" onclick="document.getElementById('importFile').click()">Back-up terugzetten</button>
+
+      <button
+        class="secondary"
+        onclick="document.getElementById('importFile').click()"
+      >
+        Back-up terugzetten
+      </button>
     </div>
 
-    <input id="importFile" type="file" accept=".json" hidden onchange="importRecipes(event)">
+    <input
+      id="importFile"
+      type="file"
+      accept=".json"
+      hidden
+      onchange="importRecipes(event)"
+    >
 
     <div class="modalActions">
-      <button class="secondary" onclick="backupDialog.close()">Sluiten</button>
+      <button
+        class="secondary"
+        onclick="document.getElementById('backupDialog').close()"
+      >
+        Sluiten
+      </button>
     </div>
+
   </div>
 </dialog>
+
 
 <script>
 
 const STORAGE_KEY = "eetschema_recipes_v1";
+const PERSON_KEY = "eetschema_person_v2";
 
 let recipes = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+
 let activeCategory = "Alles";
 let favoritesOnly = false;
 
+let activePerson =
+  localStorage.getItem(PERSON_KEY) || "Bert-Jan";
+
+
 function saveAll(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes));
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(recipes)
+  );
 }
 
+
+function uniqueId(){
+  if(
+    window.crypto &&
+    typeof window.crypto.randomUUID === "function"
+  ){
+    return crypto.randomUUID();
+  }
+
+  return "r-" +
+    Date.now() +
+    "-" +
+    Math.random().toString(36).slice(2);
+}
+
+
+function setPerson(person){
+  activePerson = person;
+
+  localStorage.setItem(
+    PERSON_KEY,
+    person
+  );
+
+  updatePersonButtons();
+  render();
+}
+
+
+function updatePersonButtons(){
+
+  const bj =
+    document.getElementById("personBJ");
+
+  const babke =
+    document.getElementById("personBabke");
+
+  bj.classList.toggle(
+    "active",
+    activePerson === "Bert-Jan"
+  );
+
+  babke.classList.toggle(
+    "active",
+    activePerson === "Babke"
+  );
+
+  const info =
+    document.getElementById("profileInfo");
+
+  if(activePerson === "Bert-Jan"){
+    info.textContent =
+      "Actief profiel: Bert-Jan";
+  } else {
+    info.textContent =
+      "Actief profiel: Babke";
+  }
+}
+
+
+function hasBabkeData(r){
+
+  return Boolean(
+    String(r.babkeKcal || "").trim() ||
+    String(r.babkeProtein || "").trim() ||
+    String(r.babkeCarbs || "").trim() ||
+    String(r.babkeFat || "").trim() ||
+    String(r.babkeFiber || "").trim() ||
+    String(r.babkeIngredients || "").trim() ||
+    String(r.babke || "").trim()
+  );
+}
+
+
+function getPersonData(r){
+
+  if(activePerson === "Bert-Jan"){
+
+    return {
+      available:true,
+      kcal:r.kcal,
+      protein:r.protein,
+      carbs:r.carbs,
+      fat:r.fat,
+      fiber:r.fiber,
+      ingredients:r.ingredients || "",
+      notes:""
+    };
+  }
+
+
+  if(!hasBabkeData(r)){
+
+    return {
+      available:false,
+      kcal:"",
+      protein:"",
+      carbs:"",
+      fat:"",
+      fiber:"",
+      ingredients:"",
+      notes:""
+    };
+  }
+
+
+  return {
+    available:true,
+    kcal:r.babkeKcal || "",
+    protein:r.babkeProtein || "",
+    carbs:r.babkeCarbs || "",
+    fat:r.babkeFat || "",
+    fiber:r.babkeFiber || "",
+    ingredients:
+      r.babkeIngredients ||
+      r.babke ||
+      "",
+    notes:
+      r.babkeNotes ||
+      ""
+  };
+}
+
+
 function setCategory(category){
+
   activeCategory = category;
   favoritesOnly = false;
   render();
 }
 
+
 function showFavorites(){
+
   favoritesOnly = true;
   activeCategory = "Alles";
   render();
 }
 
+
 function render(){
-  const container = document.getElementById("recipes");
-  const search = document.getElementById("search").value.toLowerCase().trim();
 
-  let filtered = recipes.filter(r => {
-    const categoryOK = activeCategory === "Alles" || r.category === activeCategory;
-    const favoriteOK = !favoritesOnly || r.favorite;
+  const container =
+    document.getElementById("recipes");
 
-    const haystack = [
-      r.name,
-      r.category,
-      r.ingredients,
-      r.tags,
-      r.method
-    ].join(" ").toLowerCase();
+  const search =
+    document
+      .getElementById("search")
+      .value
+      .toLowerCase()
+      .trim();
 
-    const searchOK = !search || haystack.includes(search);
 
-    return categoryOK && favoriteOK && searchOK;
-  });
+  let filtered =
+    recipes.filter(r => {
 
-  document.getElementById("categoryTitle").textContent =
-    favoritesOnly ? "❤️ Favorieten" :
-    activeCategory === "Alles" ? "Alle recepten" :
-    activeCategory;
+      const categoryOK =
+        activeCategory === "Alles" ||
+        r.category === activeCategory;
+
+      const favoriteOK =
+        !favoritesOnly ||
+        r.favorite;
+
+      const haystack = [
+        r.name,
+        r.category,
+        r.ingredients,
+        r.babkeIngredients,
+        r.babke,
+        r.tags,
+        r.method,
+        r.variation
+      ]
+      .join(" ")
+      .toLowerCase();
+
+      const searchOK =
+        !search ||
+        haystack.includes(search);
+
+      return (
+        categoryOK &&
+        favoriteOK &&
+        searchOK
+      );
+    });
+
+
+  document
+    .getElementById("categoryTitle")
+    .textContent =
+
+      favoritesOnly
+      ? "❤️ Favorieten"
+
+      : activeCategory === "Alles"
+      ? "Alle recepten"
+
+      : activeCategory;
+
 
   if(filtered.length === 0){
+
     container.innerHTML = `
       <div class="empty">
-        Nog geen recepten gevonden.<br><br>
+        Nog geen recepten gevonden.
+        <br><br>
         Tik op <b>+</b> om er één toe te voegen.
-      </div>`;
+      </div>
+    `;
+
     return;
   }
 
-  container.innerHTML = filtered.map(r => `
-    <div class="recipe">
 
-      <div class="recipeTop">
-        <div>
-          <h2>${escapeHtml(r.name)}</h2>
-          <div class="meta">
-            ${r.kcal || "?"} kcal ·
-            ${r.protein || "?"} g eiwit ·
-            ${r.time || "tijd onbekend"}
-          </div>
-        </div>
+  container.innerHTML =
+    filtered
+      .map(r => recipeCard(r))
+      .join("");
+}
 
-        <button class="heart ${r.favorite ? "on" : ""}"
-          onclick="toggleFavorite('${r.id}')">
-          ${r.favorite ? "♥" : "♡"}
-        </button>
+
+function recipeCard(r){
+
+  const d = getPersonData(r);
+
+  const personBadge =
+    `<span class="profileBadge">
+      ${activePerson === "Bert-Jan"
+        ? "👨 Bert-Jan"
+        : "👩 Babke"}
+    </span>`;
+
+
+  const meta = d.available
+    ? `
+      <div class="meta">
+        ${d.kcal || "?"} kcal ·
+        ${d.protein || "?"} g eiwit ·
+        ${r.time || "tijd onbekend"}
       </div>
 
       <div class="meta">
-        KH ${r.carbs || "?"} g ·
-        Vet ${r.fat || "?"} g ·
-        Vezels ${r.fiber || "?"} g
+        KH ${d.carbs || "?"} g ·
+        Vet ${d.fat || "?"} g ·
+        Vezels ${d.fiber || "?"} g
+      </div>
+    `
+    : `
+      <div class="missingBadge">
+        Babke-portie nog niet ingevuld
+      </div>
+    `;
+
+
+  let detailsContent = "";
+
+
+  if(!d.available){
+
+    detailsContent = `
+      <div class="warningBox">
+        Voor dit recept is nog geen aparte
+        Babke-portie toegevoegd.
+
+        Tik op <b>Bewerken</b> om die later in te vullen.
+      </div>
+    `;
+
+  } else {
+
+    detailsContent = `
+
+      <h3>Ingrediënten</h3>
+
+      <ul>
+        ${lines(d.ingredients)
+          .map(x =>
+            `<li>${escapeHtml(x)}</li>`
+          )
+          .join("")}
+      </ul>
+
+
+      <h3>Werkwijze</h3>
+
+      <ol>
+        ${lines(r.method)
+          .map(x =>
+            `<li>${escapeHtml(x)}</li>`
+          )
+          .join("")}
+      </ol>
+
+
+      ${r.variation ? `
+        <h3>Variatie</h3>
+        <p>${escapeHtml(r.variation)}</p>
+      ` : ""}
+
+
+      ${d.notes ? `
+        <h3>Opmerking</h3>
+        <p>
+          ${escapeHtml(d.notes)
+            .replace(/\n/g,"<br>")}
+        </p>
+      ` : ""}
+    `;
+  }
+
+
+  return `
+
+    <div class="recipe">
+
+      <div class="recipeTop">
+
+        <div>
+
+          <h2>
+            ${escapeHtml(r.name)}
+          </h2>
+
+          ${meta}
+
+          ${personBadge}
+
+        </div>
+
+
+        <button
+          class="heart ${r.favorite ? "on" : ""}"
+          onclick="toggleFavorite('${r.id}')"
+        >
+          ${r.favorite ? "♥" : "♡"}
+        </button>
+
       </div>
 
+
       <div class="tags">
+
         ${(r.tags || "")
           .split(",")
           .filter(Boolean)
-          .map(t => `<span class="tag">${escapeHtml(t.trim())}</span>`)
+          .map(t =>
+            `<span class="tag">
+              ${escapeHtml(t.trim())}
+            </span>`
+          )
           .join("")}
+
       </div>
 
+
       <details>
+
         <summary>Bekijk recept</summary>
 
-        <h3>Ingrediënten</h3>
-        <ul>
-          ${lines(r.ingredients).map(x => `<li>${escapeHtml(x)}</li>`).join("")}
-        </ul>
+        ${detailsContent}
 
-        <h3>Werkwijze</h3>
-        <ol>
-          ${lines(r.method).map(x => `<li>${escapeHtml(x)}</li>`).join("")}
-        </ol>
-
-        ${r.variation ? `
-          <h3>Variatie</h3>
-          <p>${escapeHtml(r.variation)}</p>
-        ` : ""}
-
-        ${r.babke ? `
-          <h3>Babke-portie</h3>
-          <p>${escapeHtml(r.babke).replace(/\n/g,"<br>")}</p>
-        ` : ""}
 
         <div class="actions">
-          <button class="light" onclick="editRecipe('${r.id}')">✏️ Bewerken</button>
-          <button class="danger" onclick="deleteRecipe('${r.id}')">🗑 Verwijderen</button>
+
+          <button
+            class="light"
+            onclick="editRecipe('${r.id}')"
+          >
+            ✏️ Bewerken
+          </button>
+
+          <button
+            class="danger"
+            onclick="deleteRecipe('${r.id}')"
+          >
+            🗑 Verwijderen
+          </button>
+
         </div>
 
       </details>
+
     </div>
-  `).join("");
+  `;
 }
 
+
 function lines(text){
-  return (text || "")
+
+  return String(text || "")
     .split("\n")
     .map(x => x.trim())
     .filter(Boolean);
 }
 
+
 function escapeHtml(text){
+
   return String(text || "")
     .replaceAll("&","&amp;")
     .replaceAll("<","&lt;")
@@ -569,199 +1057,735 @@ function escapeHtml(text){
     .replaceAll("'","&#039;");
 }
 
-function openRecipeForm(){
-  document.getElementById("formTitle").textContent = "Recept toevoegen";
-  document.getElementById("editId").value = "";
 
-  ["name","kcal","protein","carbs","fat","fiber","time",
-   "ingredients","method","variation","tags","babke"]
-  .forEach(id => document.getElementById(id).value = "");
+function clearField(id){
 
-  document.getElementById("category").value =
-    activeCategory !== "Alles" ? activeCategory : "Diner";
+  const el =
+    document.getElementById(id);
 
-  document.getElementById("recipeDialog").showModal();
+  if(el){
+    el.value = "";
+  }
 }
 
+
+function openRecipeForm(){
+
+  document
+    .getElementById("formTitle")
+    .textContent =
+      "Recept toevoegen";
+
+
+  document
+    .getElementById("editId")
+    .value = "";
+
+
+  [
+    "name",
+    "kcal",
+    "protein",
+    "carbs",
+    "fat",
+    "fiber",
+    "time",
+    "ingredients",
+    "method",
+    "variation",
+    "tags",
+    "babkeKcal",
+    "babkeProtein",
+    "babkeCarbs",
+    "babkeFat",
+    "babkeFiber",
+    "babkeIngredients",
+    "babkeNotes"
+  ]
+  .forEach(clearField);
+
+
+  document
+    .getElementById("category")
+    .value =
+
+      activeCategory !== "Alles"
+      ? activeCategory
+      : "Diner";
+
+
+  document
+    .getElementById("recipeDialog")
+    .showModal();
+}
+
+
 function saveRecipe(){
-  const name = document.getElementById("name").value.trim();
+
+  const name =
+    document
+      .getElementById("name")
+      .value
+      .trim();
+
 
   if(!name){
-    alert("Geef het recept eerst een naam.");
+
+    alert(
+      "Geef het recept eerst een naam."
+    );
+
     return;
   }
 
-  const id = document.getElementById("editId").value;
+
+  const id =
+    document
+      .getElementById("editId")
+      .value;
+
+
+  const old =
+    recipes.find(r =>
+      r.id === id
+    );
+
 
   const data = {
-    id: id || crypto.randomUUID(),
+
+    id:
+      id ||
+      uniqueId(),
+
     name,
-    category: document.getElementById("category").value,
-    kcal: document.getElementById("kcal").value,
-    protein: document.getElementById("protein").value,
-    carbs: document.getElementById("carbs").value,
-    fat: document.getElementById("fat").value,
-    fiber: document.getElementById("fiber").value,
-    time: document.getElementById("time").value,
-    ingredients: document.getElementById("ingredients").value,
-    method: document.getElementById("method").value,
-    variation: document.getElementById("variation").value,
-    tags: document.getElementById("tags").value,
-    babke: document.getElementById("babke").value,
-    favorite: false
+
+    category:
+      document
+        .getElementById("category")
+        .value,
+
+    time:
+      document
+        .getElementById("time")
+        .value,
+
+    tags:
+      document
+        .getElementById("tags")
+        .value,
+
+    method:
+      document
+        .getElementById("method")
+        .value,
+
+    variation:
+      document
+        .getElementById("variation")
+        .value,
+
+
+    kcal:
+      document
+        .getElementById("kcal")
+        .value,
+
+    protein:
+      document
+        .getElementById("protein")
+        .value,
+
+    carbs:
+      document
+        .getElementById("carbs")
+        .value,
+
+    fat:
+      document
+        .getElementById("fat")
+        .value,
+
+    fiber:
+      document
+        .getElementById("fiber")
+        .value,
+
+    ingredients:
+      document
+        .getElementById("ingredients")
+        .value,
+
+
+    babkeKcal:
+      document
+        .getElementById("babkeKcal")
+        .value,
+
+    babkeProtein:
+      document
+        .getElementById("babkeProtein")
+        .value,
+
+    babkeCarbs:
+      document
+        .getElementById("babkeCarbs")
+        .value,
+
+    babkeFat:
+      document
+        .getElementById("babkeFat")
+        .value,
+
+    babkeFiber:
+      document
+        .getElementById("babkeFiber")
+        .value,
+
+    babkeIngredients:
+      document
+        .getElementById("babkeIngredients")
+        .value,
+
+    babkeNotes:
+      document
+        .getElementById("babkeNotes")
+        .value,
+
+
+    favorite:
+      old?.favorite || false
   };
 
+
+  /*
+    Oude back-ups konden nog
+    het veld "babke" bevatten.
+    Dat bewaren we voor compatibiliteit.
+  */
+
+  if(old?.babke){
+
+    data.babke =
+      old.babke;
+  }
+
+
   if(id){
-    const old = recipes.find(r => r.id === id);
-    data.favorite = old?.favorite || false;
-    recipes = recipes.map(r => r.id === id ? data : r);
+
+    recipes =
+      recipes.map(r =>
+        r.id === id
+        ? data
+        : r
+      );
+
   } else {
+
     recipes.push(data);
   }
 
+
   saveAll();
-  recipeDialog.close();
+
+
+  document
+    .getElementById("recipeDialog")
+    .close();
+
+
   render();
 }
+
 
 function editRecipe(id){
-  const r = recipes.find(x => x.id === id);
+
+  const r =
+    recipes.find(x =>
+      x.id === id
+    );
+
+
   if(!r) return;
 
-  document.getElementById("formTitle").textContent = "Recept bewerken";
-  document.getElementById("editId").value = r.id;
 
-  document.getElementById("name").value = r.name || "";
-  document.getElementById("category").value = r.category || "Diner";
-  document.getElementById("kcal").value = r.kcal || "";
-  document.getElementById("protein").value = r.protein || "";
-  document.getElementById("carbs").value = r.carbs || "";
-  document.getElementById("fat").value = r.fat || "";
-  document.getElementById("fiber").value = r.fiber || "";
-  document.getElementById("time").value = r.time || "";
-  document.getElementById("ingredients").value = r.ingredients || "";
-  document.getElementById("method").value = r.method || "";
-  document.getElementById("variation").value = r.variation || "";
-  document.getElementById("tags").value = r.tags || "";
-  document.getElementById("babke").value = r.babke || "";
+  document
+    .getElementById("formTitle")
+    .textContent =
+      "Recept bewerken";
 
-  recipeDialog.showModal();
+
+  document
+    .getElementById("editId")
+    .value =
+      r.id;
+
+
+  document
+    .getElementById("name")
+    .value =
+      r.name || "";
+
+
+  document
+    .getElementById("category")
+    .value =
+      r.category || "Diner";
+
+
+  document
+    .getElementById("time")
+    .value =
+      r.time || "";
+
+
+  document
+    .getElementById("tags")
+    .value =
+      r.tags || "";
+
+
+  document
+    .getElementById("method")
+    .value =
+      r.method || "";
+
+
+  document
+    .getElementById("variation")
+    .value =
+      r.variation || "";
+
+
+  document
+    .getElementById("kcal")
+    .value =
+      r.kcal || "";
+
+
+  document
+    .getElementById("protein")
+    .value =
+      r.protein || "";
+
+
+  document
+    .getElementById("carbs")
+    .value =
+      r.carbs || "";
+
+
+  document
+    .getElementById("fat")
+    .value =
+      r.fat || "";
+
+
+  document
+    .getElementById("fiber")
+    .value =
+      r.fiber || "";
+
+
+  document
+    .getElementById("ingredients")
+    .value =
+      r.ingredients || "";
+
+
+  document
+    .getElementById("babkeKcal")
+    .value =
+      r.babkeKcal || "";
+
+
+  document
+    .getElementById("babkeProtein")
+    .value =
+      r.babkeProtein || "";
+
+
+  document
+    .getElementById("babkeCarbs")
+    .value =
+      r.babkeCarbs || "";
+
+
+  document
+    .getElementById("babkeFat")
+    .value =
+      r.babkeFat || "";
+
+
+  document
+    .getElementById("babkeFiber")
+    .value =
+      r.babkeFiber || "";
+
+
+  document
+    .getElementById("babkeIngredients")
+    .value =
+      r.babkeIngredients ||
+      r.babke ||
+      "";
+
+
+  document
+    .getElementById("babkeNotes")
+    .value =
+      r.babkeNotes || "";
+
+
+  document
+    .getElementById("recipeDialog")
+    .showModal();
 }
+
 
 function deleteRecipe(id){
-  if(!confirm("Dit recept verwijderen?")) return;
-  recipes = recipes.filter(r => r.id !== id);
-  saveAll();
-  render();
-}
 
-function toggleFavorite(id){
-  const r = recipes.find(x => x.id === id);
-  if(r){
-    r.favorite = !r.favorite;
-    saveAll();
-    render();
-  }
-}
-
-function randomRecipe(){
-  let pool = recipes.filter(r =>
-    activeCategory === "Alles" || r.category === activeCategory
-  );
-
-  if(pool.length === 0){
-    alert("Er zijn nog geen recepten in deze categorie.");
+  if(
+    !confirm(
+      "Dit recept verwijderen?"
+    )
+  ){
     return;
   }
 
-  const recipe = pool[Math.floor(Math.random() * pool.length)];
+
+  recipes =
+    recipes.filter(r =>
+      r.id !== id
+    );
+
+
+  saveAll();
+  render();
+}
+
+
+function toggleFavorite(id){
+
+  const r =
+    recipes.find(x =>
+      x.id === id
+    );
+
+
+  if(!r) return;
+
+
+  r.favorite =
+    !r.favorite;
+
+
+  saveAll();
+  render();
+}
+
+
+function randomRecipe(){
+
+  let pool =
+    recipes.filter(r =>
+
+      activeCategory === "Alles" ||
+      r.category === activeCategory
+    );
+
+
+  if(activePerson === "Babke"){
+
+    const babkePool =
+      pool.filter(hasBabkeData);
+
+    if(babkePool.length > 0){
+      pool = babkePool;
+    }
+  }
+
+
+  if(pool.length === 0){
+
+    alert(
+      "Er zijn nog geen recepten in deze categorie."
+    );
+
+    return;
+  }
+
+
+  const recipe =
+    pool[
+      Math.floor(
+        Math.random() *
+        pool.length
+      )
+    ];
+
+
+  const d =
+    getPersonData(recipe);
+
+
+  if(!d.available){
+
+    alert(
+      "🎲 Kies voor mij:\n\n" +
+      recipe.name +
+      "\n\n" +
+      "Voor Babke is de portie nog niet ingevuld."
+    );
+
+    return;
+  }
+
+
   alert(
     "🎲 Kies voor mij:\n\n" +
     recipe.name +
+    "\n\n" +
+    activePerson +
     "\n" +
-    (recipe.kcal || "?") + " kcal · " +
-    (recipe.protein || "?") + " g eiwit"
+    (d.kcal || "?") +
+    " kcal · " +
+    (d.protein || "?") +
+    " g eiwit"
   );
 }
 
+
 function openDinnerCheck(){
-  document.getElementById("dinnerInput").value = "";
-  dinnerDialog.showModal();
+
+  document
+    .getElementById("dinnerInput")
+    .value = "";
+
+
+  document
+    .getElementById("dinnerPerson")
+    .value =
+      activePerson;
+
+
+  document
+    .getElementById("dinnerDialog")
+    .showModal();
 }
 
+
 async function copyDinnerCheck(){
-  const input = document.getElementById("dinnerInput").value.trim();
+
+  const input =
+    document
+      .getElementById("dinnerInput")
+      .value
+      .trim();
+
+
+  const person =
+    document
+      .getElementById("dinnerPerson")
+      .value;
+
 
   if(!input){
-    alert("Plak eerst een recept of link.");
+
+    alert(
+      "Plak eerst een recept of link."
+    );
+
     return;
   }
+
+
+  let targetText = "";
+
+
+  if(person === "Bert-Jan"){
+
+    targetText = `
+Maak een passende Bert-Jan-portie.
+Richtwaarde diner: ongeveer 1140-1180 kcal.
+`;
+
+  } else if(person === "Babke"){
+
+    targetText = `
+Maak een passende Babke-portie.
+Richtwaarde diner: ongeveer 650-680 kcal.
+`;
+
+  } else {
+
+    targetText = `
+Maak twee porties van hetzelfde gerecht:
+
+1. Bert-Jan:
+ongeveer 1140-1180 kcal.
+
+2. Babke:
+ongeveer 650-680 kcal.
+
+Geef ook de totale hoeveelheid ingrediënten die ik moet inkopen/bereiden en geef duidelijk aan hoe ik het gerecht na bereiding over beide porties verdeel.
+`;
+  }
+
 
   const text =
 `DINERCHECK
 
 ${input}
 
-Controleer dit recept voor mijn dinerplan.
-Maak een passende portie voor mijn dinerdoel.
-Geef praktische hoeveelheden, kcal, koolhydraten, eiwit, vet en vezels.
-Noem bij delen van verpakkingen ook de totale verpakkingsinhoud.
-Geef een korte werkwijze en pas het recept aan als dat nodig is.`;
+${targetText}
+
+Geef per portie:
+- praktische hoeveelheden;
+- calorieën;
+- koolhydraten;
+- eiwit;
+- vet;
+- vezels;
+- korte werkwijze.
+
+Gebruik waar mogelijk praktische maten zoals stuks, eetlepels, handjes, halve paprika enzovoort.
+
+Als je een deel van een verpakking noemt, vermeld dan ook de totale inhoud van die verpakking.
+
+Pas het oorspronkelijke recept zo weinig mogelijk aan, maar zorg dat het binnen het betreffende dinerplan past.`;
+
 
   try{
-    await navigator.clipboard.writeText(text);
-    alert("DINERCHECK gekopieerd. Plak hem nu in ChatGPT.");
-  }catch{
-    prompt("Kopieer onderstaande tekst:", text);
+
+    await navigator
+      .clipboard
+      .writeText(text);
+
+
+    alert(
+      "DINERCHECK gekopieerd. Plak hem nu in ChatGPT."
+    );
+
+
+  } catch {
+
+    prompt(
+      "Kopieer onderstaande tekst:",
+      text
+    );
   }
 }
 
+
 function openBackup(){
-  backupDialog.showModal();
+
+  document
+    .getElementById("backupDialog")
+    .showModal();
 }
 
-function exportRecipes(){
-  const blob = new Blob(
-    [JSON.stringify(recipes,null,2)],
-    {type:"application/json"}
-  );
 
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "eetschema-backup.json";
+function exportRecipes(){
+
+  const blob =
+    new Blob(
+      [
+        JSON.stringify(
+          recipes,
+          null,
+          2
+        )
+      ],
+      {
+        type:"application/json"
+      }
+    );
+
+
+  const url =
+    URL.createObjectURL(blob);
+
+
+  const a =
+    document.createElement("a");
+
+
+  a.href =
+    url;
+
+
+  a.download =
+    "eetschema-backup.json";
+
+
   a.click();
+
+
   URL.revokeObjectURL(url);
 }
 
+
 function importRecipes(event){
-  const file = event.target.files[0];
+
+  const file =
+    event.target.files[0];
+
+
   if(!file) return;
 
-  const reader = new FileReader();
+
+  const reader =
+    new FileReader();
+
 
   reader.onload = () => {
+
     try{
-      const data = JSON.parse(reader.result);
 
-      if(!Array.isArray(data))
+      const data =
+        JSON.parse(
+          reader.result
+        );
+
+
+      if(
+        !Array.isArray(data)
+      ){
         throw new Error();
-
-      if(confirm("Huidige recepten vervangen door deze back-up?")){
-        recipes = data;
-        saveAll();
-        render();
-        backupDialog.close();
       }
 
-    }catch{
-      alert("Dit lijkt geen geldige eetschema-back-up.");
+
+      if(
+        confirm(
+          "Huidige recepten vervangen door deze back-up?"
+        )
+      ){
+
+        recipes = data;
+
+        saveAll();
+        render();
+
+        document
+          .getElementById("backupDialog")
+          .close();
+      }
+
+
+    } catch {
+
+      alert(
+        "Dit lijkt geen geldige eetschema-back-up."
+      );
     }
   };
+
 
   reader.readAsText(file);
 }
 
+
+updatePersonButtons();
 render();
 
 </script>
