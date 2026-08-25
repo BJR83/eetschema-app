@@ -692,6 +692,11 @@ function setPerson(person){
     PERSON_KEY,
     person
   );
+
+  updatePersonButtons();
+  render();
+}
+
 async function updateRecipes(){
 
   if(!navigator.onLine){
@@ -831,11 +836,6 @@ async function updateRecipes(){
     );
   }
 }
-  updatePersonButtons();
-  render();
-}
-
-
 function updatePersonButtons(){
 
   const bj =
