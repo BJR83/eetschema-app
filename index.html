@@ -596,24 +596,43 @@
       Zo raak je niets kwijt wanneer browsergegevens worden gewist.
     </p>
 
-    <div class="modalActions">
-      <button onclick="exportRecipes()">Back-up downloaden</button>
+   <div class="modalActions">
 
-      <button
-        class="secondary"
-        onclick="document.getElementById('importFile').click()"
-      >
-        Back-up terugzetten
-      </button>
-    </div>
+  <button onclick="exportRecipes()">
+    Back-up downloaden
+  </button>
 
-    <input
-      id="importFile"
-      type="file"
-      accept=".json"
-      hidden
-      onchange="importRecipes(event)"
-    >
+  <button
+    class="secondary"
+    onclick="document.getElementById('importFile').click()"
+  >
+    Back-up terugzetten
+  </button>
+
+  <button
+    class="light"
+    onclick="document.getElementById('mergeFile').click()"
+  >
+    ➕ Aanvulling importeren
+  </button>
+
+</div>
+
+<input
+  id="importFile"
+  type="file"
+  accept=".json"
+  hidden
+  onchange="importRecipes(event)"
+>
+
+<input
+  id="mergeFile"
+  type="file"
+  accept=".json"
+  hidden
+  onchange="mergeRecipes(event)"
+> 
 
     <div class="modalActions">
       <button
@@ -1784,7 +1803,107 @@ function importRecipes(event){
   reader.readAsText(file);
 }
 
+function mergeRecipes(event){
 
+  const file =
+    event.target.files[0];
+
+  if(!file) return;
+
+  const reader =
+    new FileReader();
+
+  reader.onload = () => {
+
+    try{
+
+      const incoming =
+        JSON.parse(
+          reader.result
+        );
+
+      if(!Array.isArray(incoming)){
+        throw new Error();
+      }
+
+      let added = 0;
+      let updated = 0;
+
+      incoming.forEach(newRecipe => {
+
+        if(!newRecipe.id){
+          newRecipe.id = uniqueId();
+        }
+
+        const index =
+          recipes.findIndex(
+            r => r.id === newRecipe.id
+          );
+
+        if(index >= 0){
+
+          const existing =
+            recipes[index];
+
+          /*
+            Alleen velden die in het
+            aanvulling-bestand staan
+            worden bijgewerkt.
+
+            Favorieten op de telefoon
+            blijven behouden.
+          */
+
+          recipes[index] = {
+            ...existing,
+            ...newRecipe,
+            favorite:
+              existing.favorite || false
+          };
+
+          updated++;
+
+        } else {
+
+          recipes.push({
+            ...newRecipe,
+            favorite:
+              newRecipe.favorite || false
+          });
+
+          added++;
+        }
+      });
+
+      saveAll();
+      render();
+
+      document
+        .getElementById("backupDialog")
+        .close();
+
+      alert(
+        "Aanvulling geïmporteerd ✅\n\n" +
+        added +
+        " nieuwe recepten toegevoegd.\n" +
+        updated +
+        " bestaande recepten bijgewerkt."
+      );
+
+      event.target.value = "";
+
+    } catch(error){
+
+      alert(
+        "Dit lijkt geen geldig aanvulling-bestand."
+      );
+
+      event.target.value = "";
+    }
+  };
+
+  reader.readAsText(file);
+}
 updatePersonButtons();
 render();
 
