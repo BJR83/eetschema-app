@@ -573,14 +573,37 @@
     ></textarea>
 
     <div class="modalActions">
-      <button onclick="copyDinnerCheck()">Kopieer DINERCHECK</button>
-      <button
-        class="secondary"
-        onclick="document.getElementById('dinnerDialog').close()"
-      >
-        Sluiten
-      </button>
-    </div>
+  <button onclick="copyDinnerCheck()">Kopieer DINERCHECK</button>
+
+  <button
+    class="secondary"
+    onclick="document.getElementById('dinnerDialog').close()"
+  >
+    Sluiten
+  </button>
+</div>
+
+<hr style="margin:24px 0;border:0;border-top:1px solid #dce3de;">
+
+<h3>📥 DINERCHECK-resultaat terugzetten</h3>
+
+<div class="infoBox">
+  Kopieer straks het JSON-blok uit ChatGPT en plak het hieronder.
+  De app maakt daar automatisch een recept van.
+</div>
+
+<label>JSON uit ChatGPT</label>
+
+<textarea
+  id="dinnerResult"
+  placeholder="Plak hier het JSON-blok..."
+></textarea>
+
+<div class="modalActions">
+  <button onclick="importDinnerCheckResult()">
+    📥 Recept importeren
+  </button>
+</div>
 
   </div>
 </dialog>
@@ -1828,7 +1851,45 @@ Gebruik waar mogelijk praktische maten zoals stuks, eetlepels, handjes, halve pa
 
 Als je een deel van een verpakking noemt, vermeld dan ook de totale inhoud van die verpakking.
 
-Pas het oorspronkelijke recept zo weinig mogelijk aan, maar zorg dat het binnen het betreffende dinerplan past.`;
+Pas het oorspronkelijke recept zo weinig mogelijk aan, maar zorg dat het binnen het betreffende dinerplan past.
+
+Sluit je antwoord af met exact één JSON-codeblok dat ik in mijn eetschema-app kan importeren.
+
+Gebruik exact deze velden:
+
+{
+  "id": "",
+  "name": "Naam van recept",
+  "category": "Diner",
+  "bertjanAvailable": true,
+  "kcal": "",
+  "protein": "",
+  "carbs": "",
+  "fat": "",
+  "fiber": "",
+  "time": "",
+  "ingredients": "Eén ingrediënt per regel",
+  "method": "Eén bereidingsstap per regel",
+  "variation": "",
+  "tags": "tag1,tag2,tag3",
+  "babkeKcal": "",
+  "babkeProtein": "",
+  "babkeCarbs": "",
+  "babkeFat": "",
+  "babkeFiber": "",
+  "babkeIngredients": "Eén ingrediënt per regel",
+  "babkeNotes": ""
+}
+
+Regels:
+- laat "id" leeg; de app maakt zelf een id;
+- gebruik alleen geldige JSON;
+- geen commentaar binnen het JSON-blok;
+- bij alleen Bert-Jan: vul Babke-velden leeg in;
+- bij alleen Babke: zet "bertjanAvailable" op false en laat de Bert-Jan-velden leeg;
+- bij Samen: vul beide porties volledig in;
+- voedingswaarden zijn getallen zonder eenheid;
+- zet ingrediënten en bereidingsstappen als tekst met \\n tussen de regels.`; 
 
 
   try{
@@ -2061,6 +2122,181 @@ function mergeRecipes(event){
 
   reader.readAsText(file);
 }
+function importDinnerCheckResult(){
+
+  let raw =
+    document
+      .getElementById("dinnerResult")
+      .value
+      .trim();
+
+
+  if(!raw){
+
+    alert(
+      "Plak eerst het JSON-blok uit ChatGPT."
+    );
+
+    return;
+  }
+
+
+  try{
+
+    /*
+      Codeblokken zoals ```json ... ```
+      worden automatisch verwijderd.
+    */
+
+    raw = raw
+      .replace(/^```json\s*/i, "")
+      .replace(/^```\s*/i, "")
+      .replace(/\s*```$/i, "");
+
+
+    /*
+      Als per ongeluk ook tekst rond
+      het JSON is meegekopieerd,
+      proberen we alleen het object
+      eruit te halen.
+    */
+
+    const firstBrace =
+      raw.indexOf("{");
+
+    const lastBrace =
+      raw.lastIndexOf("}");
+
+
+    if(
+      firstBrace >= 0 &&
+      lastBrace > firstBrace
+    ){
+
+      raw =
+        raw.slice(
+          firstBrace,
+          lastBrace + 1
+        );
+    }
+
+
+    const newRecipe =
+      JSON.parse(raw);
+
+
+    if(!newRecipe.name){
+
+      throw new Error(
+        "Receptnaam ontbreekt"
+      );
+    }
+
+
+    if(!newRecipe.category){
+
+      newRecipe.category =
+        "Diner";
+    }
+
+
+    /*
+      Eerst kijken of hetzelfde recept
+      al bestaat. Zo voorkomen we
+      onnodige dubbele recepten.
+    */
+
+    const existingIndex =
+      recipes.findIndex(r =>
+
+        String(r.name || "")
+          .trim()
+          .toLowerCase()
+
+        ===
+
+        String(newRecipe.name || "")
+          .trim()
+          .toLowerCase()
+
+        &&
+
+        r.category ===
+        newRecipe.category
+      );
+
+
+    if(existingIndex >= 0){
+
+      const existing =
+        recipes[existingIndex];
+
+
+      recipes[existingIndex] = {
+
+        ...existing,
+        ...newRecipe,
+
+        id:
+          existing.id,
+
+        favorite:
+          existing.favorite || false
+      };
+
+
+      saveAll();
+      render();
+
+
+      alert(
+        "Recept bijgewerkt ✅\n\n" +
+        newRecipe.name
+      );
+
+    } else {
+
+      newRecipe.id =
+        newRecipe.id ||
+        uniqueId();
+
+
+      newRecipe.favorite =
+        false;
+
+
+      recipes.push(
+        newRecipe
+      );
+
+
+      saveAll();
+      render();
+
+
+      alert(
+        "Nieuw recept toegevoegd ✅\n\n" +
+        newRecipe.name
+      );
+    }
+
+
+    document
+      .getElementById("dinnerResult")
+      .value = "";
+
+
+  } catch(error){
+
+    console.error(error);
+
+    alert(
+      "Importeren is niet gelukt.\n\n" +
+      "Controleer of je het volledige JSON-blok uit ChatGPT hebt gekopieerd."
+    );
+  }
+}
+
 updatePersonButtons();
 render();
 
