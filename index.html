@@ -399,6 +399,7 @@
     <button class="secondary" onclick="showFavorites()">❤️ Favorieten</button>
     <button class="secondary" onclick="randomRecipe()">🎲 Kies voor mij</button>
     <button class="secondary" onclick="openDinnerCheck()">✅ DINERCHECK</button>
+    <button class="secondary" onclick="updateRecipes()">🔄 Recepten bijwerken</button>
     <button class="secondary" onclick="openBackup()">💾 Back-up</button>
   </div>
 
@@ -691,7 +692,145 @@ function setPerson(person){
     PERSON_KEY,
     person
   );
+async function updateRecipes(){
 
+  if(!navigator.onLine){
+    alert("Geen internetverbinding gevonden.");
+    return;
+  }
+
+  try{
+
+    const manifestResponse =
+      await fetch(
+        "updates.json?t=" + Date.now(),
+        { cache: "no-store" }
+      );
+
+    if(!manifestResponse.ok){
+      throw new Error("updates.json kon niet worden geladen");
+    }
+
+    const manifest =
+      await manifestResponse.json();
+
+    if(
+      !manifest.files ||
+      !Array.isArray(manifest.files)
+    ){
+      throw new Error("Ongeldig updates-bestand");
+    }
+
+
+    let added = 0;
+    let updated = 0;
+
+
+    for(const filename of manifest.files){
+
+      const response =
+        await fetch(
+          filename + "?t=" + Date.now(),
+          { cache: "no-store" }
+        );
+
+      if(!response.ok){
+        throw new Error(
+          filename + " kon niet worden geladen"
+        );
+      }
+
+
+      const incoming =
+        await response.json();
+
+
+      if(!Array.isArray(incoming)){
+        throw new Error(
+          filename + " bevat geen geldige receptenlijst"
+        );
+      }
+
+
+      incoming.forEach(newRecipe => {
+
+        if(!newRecipe.id){
+          return;
+        }
+
+
+        const index =
+          recipes.findIndex(
+            r => r.id === newRecipe.id
+          );
+
+
+        if(index >= 0){
+
+          const existing =
+            recipes[index];
+
+
+          recipes[index] = {
+            ...existing,
+            ...newRecipe,
+
+            /*
+              Favorieten blijven lokaal
+              op deze telefoon bewaard.
+            */
+            favorite:
+              existing.favorite || false
+          };
+
+
+          updated++;
+
+        } else {
+
+          recipes.push({
+            ...newRecipe,
+            favorite:
+              newRecipe.favorite || false
+          });
+
+          added++;
+        }
+      });
+    }
+
+
+    saveAll();
+    render();
+
+
+    localStorage.setItem(
+      "eetschema_last_update",
+      new Date().toISOString()
+    );
+
+
+    alert(
+      "Recepten bijgewerkt ✅\n\n" +
+      added +
+      " nieuwe recepten toegevoegd.\n" +
+      updated +
+      " bestaande recepten gecontroleerd/bijgewerkt.\n\n" +
+      "Centrale versie: " +
+      (manifest.version || "?")
+    );
+
+
+  } catch(error){
+
+    console.error(error);
+
+    alert(
+      "Bijwerken is niet gelukt.\n\n" +
+      "Controleer de internetverbinding en probeer opnieuw."
+    );
+  }
+}
   updatePersonButtons();
   render();
 }
